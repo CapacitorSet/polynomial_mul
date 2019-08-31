@@ -4,16 +4,17 @@
  *  Created on: Mar 28, 2017
  *      Author: zhenfei
  */
-#include "simd_poly.h"
-
+#include "32toom4.h"
+#include "32toom3.h"
+#include "32sb_mul.h"
 
 int
 toom4_SB(
-    uint16_t        *r, /* out - a * b in Z[x], must be length 2n */
-    uint16_t        *t, /*  in - n coefficients of scratch space */
-    uint16_t const  *a, /*  in - polynomial */
-    uint16_t const  *b, /*  in - polynomial */
-    uint16_t const   n) /*  in - number of coefficients in a and b */
+    int32_t        *r, /* out - a * b in Z[x], must be length 2n */
+    int32_t        *t, /*  in - n coefficients of scratch space */
+    int32_t const  *a, /*  in - polynomial */
+    int32_t const  *b, /*  in - polynomial */
+    int n) /*  in - number of coefficients in a and b */
 {
     if (n < 96)
     {
@@ -28,11 +29,11 @@ toom4_SB(
     uint16_t s = 96, s2 = 192;
     uint16_t i;
     uint16_t x; // swap space
-    uint16_t const *a1 = a+s, *a2 = a+2*s, *a3 = a+3*s;
-    uint16_t const *b1 = b+s, *b2 = b+2*s, *b3 = b+3*s;
-    uint16_t *r1 = r+s, *r2 = r+2*s, *r4 = r+4*s, *r6 = r+6*s, *r7 = r+7*s;
-    uint16_t *t3 = t+2*s, *t5 = t+4*s;
-    uint16_t *e = t+6*s; // for karatsuba only
+    int32_t const *a1 = a+s, *a2 = a+2*s, *a3 = a+3*s;
+    int32_t const *b1 = b+s, *b2 = b+2*s, *b3 = b+3*s;
+    int32_t *r1 = r+s, *r2 = r+2*s, *r4 = r+4*s, *r6 = r+6*s, *r7 = r+7*s;
+    int32_t *t3 = t+2*s, *t5 = t+4*s;
+    int32_t *e = t+6*s; // for karatsuba only
     // +-1 ---- t: -, r2: +
     for(i=0; i<s; i++)
     {
@@ -105,11 +106,11 @@ toom4_SB(
 
 int
 toom4_toom3(
-    uint16_t        *r, /* out - a * b in Z[x], must be length 2n */
-    uint16_t        *t, /*  in - n coefficients of scratch space */
-    uint16_t const  *a, /*  in - polynomial */
-    uint16_t const  *b, /*  in - polynomial */
-    uint16_t const   n) /*  in - number of coefficients in a and b */
+    int32_t        *r, /* out - a * b in Z[x], must be length 2n */
+    int32_t        *t, /*  in - n coefficients of scratch space */
+    int32_t const  *a, /*  in - polynomial */
+    int32_t const  *b, /*  in - polynomial */
+    int n) /*  in - number of coefficients in a and b */
 {
     if (n < 96)
     {
@@ -124,11 +125,11 @@ toom4_toom3(
     uint16_t s = 96, s2 = 192;
     uint16_t i;
     uint16_t x; // swap space
-    uint16_t const *a1 = a+s, *a2 = a+2*s, *a3 = a+3*s;
-    uint16_t const *b1 = b+s, *b2 = b+2*s, *b3 = b+3*s;
-    uint16_t *r1 = r+s, *r2 = r+2*s, *r4 = r+4*s, *r6 = r+6*s, *r7 = r+7*s;
-    uint16_t *t3 = t+2*s, *t5 = t+4*s;
-    uint16_t *e = t+6*s; // for karatsuba only
+    int32_t const *a1 = a+s, *a2 = a+2*s, *a3 = a+3*s;
+    int32_t const *b1 = b+s, *b2 = b+2*s, *b3 = b+3*s;
+    int32_t *r1 = r+s, *r2 = r+2*s, *r4 = r+4*s, *r6 = r+6*s, *r7 = r+7*s;
+    int32_t *t3 = t+2*s, *t5 = t+4*s;
+    int32_t *e = t+6*s; // for karatsuba only
     // +-1 ---- t: -, r2: +
     for(i=0; i<s; i++)
     {
@@ -201,11 +202,11 @@ toom4_toom3(
 
 int
 toom4__mm256i_toom3(
-    uint16_t        *r, /* out - a * b in Z[x], must be length 2n */
-    uint16_t        *t, /*  in - n coefficients of scratch space */
-    uint16_t const  *a, /*  in - polynomial */
-    uint16_t const  *b, /*  in - polynomial */
-    uint16_t const   n) /*  in - number of coefficients in a and b */
+    int32_t        *r, /* out - a * b in Z[x], must be length 2n */
+    int32_t        *t, /*  in - n coefficients of scratch space */
+    int32_t const  *a, /*  in - polynomial */
+    int32_t const  *b, /*  in - polynomial */
+    int n) /*  in - number of coefficients in a and b */
 {
     if (n < 96)
     {
@@ -220,11 +221,11 @@ toom4__mm256i_toom3(
     uint16_t s = 96, s2 = 192;
     uint16_t i;
     uint16_t x; // swap space
-    uint16_t const *a1 = a+s, *a2 = a+2*s, *a3 = a+3*s;
-    uint16_t const *b1 = b+s, *b2 = b+2*s, *b3 = b+3*s;
-    uint16_t *r1 = r+s, *r2 = r+2*s, *r4 = r+4*s, *r6 = r+6*s, *r7 = r+7*s;
-    uint16_t *t3 = t+2*s, *t5 = t+4*s;
-    uint16_t *e = t+6*s; // for karatsuba only
+    int32_t const *a1 = a+s, *a2 = a+2*s, *a3 = a+3*s;
+    int32_t const *b1 = b+s, *b2 = b+2*s, *b3 = b+3*s;
+    int32_t *r1 = r+s, *r2 = r+2*s, *r4 = r+4*s, *r6 = r+6*s, *r7 = r+7*s;
+    int32_t *t3 = t+2*s, *t5 = t+4*s;
+    int32_t *e = t+6*s; // for karatsuba only
     // +-1 ---- t: -, r2: +
     for(i=0; i<s; i++)
     {
@@ -294,92 +295,13 @@ toom4__mm256i_toom3(
 
 }
 
-int test_toom4()
-{
-     uint16_t N;     // dimension
-     uint16_t *a;    // first polynomial
-     uint16_t *b;    // second polynomial
-     uint16_t *buf;    // buffer
-     uint16_t *r;    // result
-     uint16_t *r2;    // result
-     uint16_t i,j;
-     uint16_t test_dim;
-     float ss0, ss1,ss2, ss3;
-     clock_t start, end;
-
-     N = 384;
-     a = (uint16_t*) malloc (2*N*sizeof(uint16_t));
-     b = (uint16_t*) malloc (2*N*sizeof(uint16_t));
-     buf = (uint16_t*) malloc (4*N*sizeof(uint16_t));
-     r = (uint16_t*) malloc (4*N*sizeof(uint64_t));
-     r2 = (uint16_t*) malloc (4*N*sizeof(uint64_t));
-
-     cout<<"testing toom 4"<<endl;
-     for (test_dim=289;test_dim<384;test_dim++)
-     {
-         ss0 = 0;
-         ss1 = 0;
-         ss2 = 0;
-         ss3 = 0;
-         cout<<"dimension: "<<test_dim<<" ";
-         for (j=0;j<1000;j++)
-         {
-             memset(a+test_dim, 0, 2*N*sizeof(uint16_t));
-             memset(b+test_dim, 0, 2*N*sizeof(uint16_t));
-             for(i=0; i< test_dim;i++)
-             {
-                 a[i] = rand()&0x07FF;
-                 b[i] = rand()&0x07FF;
-             }
-             start = clock();
-             grade_school_mul(r,  a, b, test_dim);
-             end = clock();
-             ss0 += (float)(end-start);
-
-
-             start = clock();
-             toom4_SB(r2, buf, a, b, test_dim);
-             end = clock();
-             ss1 += (float)(end-start);
-
-
-             start = clock();
-             toom4__mm256i_toom3(r2, buf, a, b, test_dim);
-             end = clock();
-             ss2 += (float)(end-start);
-
-
-             start = clock();
-             __mm256i_toom4__mm256i_toom3(r2, buf, a, b, test_dim);
-             end = clock();
-             ss3 += (float)(end-start);
-
-             for (i=0;i<test_dim*2-1;i++)
-             {
-                 if ((r[i]%2048)!=(r2[i]%2048))
-                 {
-                     printf("error\n");
-                     for (j=0;j<test_dim*2-1;j++)
-                     {
-                         printf("%d %d %d %d\n", j, r[j],r2[j], r[j]-r2[j]);
-
-                     }
-                     return 1;
-                 }
-             }
-         }
-         cout<<ss0<<" "<<ss1<<" "<<ss2<<" "<<ss3<<endl;
-     }
-     return 0;
-}
-
 int
 __mm256i_toom4__mm256i_toom3(
-    uint16_t        *r, /* out - a * b in Z[x], must be length 2n */
-    uint16_t        *t, /*  in - n coefficients of scratch space */
-    uint16_t const  *a, /*  in - polynomial */
-    uint16_t const  *b, /*  in - polynomial */
-    uint16_t const   n) /*  in - number of coefficients in a and b */
+    int32_t        *r, /* out - a * b in Z[x], must be length 2n */
+    int32_t        *t, /*  in - n coefficients of scratch space */
+    int32_t const  *a, /*  in - polynomial */
+    int32_t const  *b, /*  in - polynomial */
+    int n) /*  in - number of coefficients in a and b */
 {
     if (n < 96)
     {
@@ -393,11 +315,11 @@ __mm256i_toom4__mm256i_toom3(
     }
     uint16_t s = 96, s2 = 192;
     uint16_t i;
-    uint16_t const *a1 = a+s, *a2 = a+2*s, *a3 = a+3*s;
-    uint16_t const *b1 = b+s, *b2 = b+2*s, *b3 = b+3*s;
-    uint16_t *r1 = r+s, *r2 = r+2*s, *r4 = r+4*s, *r6 = r+6*s, *r7 = r+7*s;
-    uint16_t *t3 = t+2*s, *t5 = t+4*s;
-    uint16_t *e = t+6*s; // for karatsuba only
+    int32_t const *a1 = a+s, *a2 = a+2*s, *a3 = a+3*s;
+    int32_t const *b1 = b+s, *b2 = b+2*s, *b3 = b+3*s;
+    int32_t *r1 = r+s, *r2 = r+2*s, *r4 = r+4*s, *r6 = r+6*s, *r7 = r+7*s;
+    int32_t *t3 = t+2*s, *t5 = t+4*s;
+    int32_t *e = t+6*s; // for karatsuba only
 
     __m256i  mr0[12],
              mr2[12],
