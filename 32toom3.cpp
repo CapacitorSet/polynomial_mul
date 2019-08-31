@@ -190,8 +190,8 @@ int toom3__mm256i_SB(int32_t *r, /* out - a * b in Z[x], must be length 2n */
    *           = a2     * b2
    */
 
-  //    grade_school_mul(t, a, b, s);
-  //    grade_school_mul(t8, a2, b2, s);
+  // grade_school_mul(t, a, b, s);
+  // grade_school_mul(t8, a2, b2, s);
 
   __m256i_grade_school_mul_32(t, buf, a, b, s);
   __m256i_grade_school_mul_32(t8, buf, a2, b2, s);
@@ -219,8 +219,8 @@ int toom3__mm256i_SB(int32_t *r, /* out - a * b in Z[x], must be length 2n */
     r3[i] = r2[i] - b1[i];
     r2[i] = r2[i] + b1[i];
   }
-  //    grade_school_mul(t2, r, r2, s);
-  //    grade_school_mul(t4, r1, r3, s);
+  // grade_school_mul(t2, r, r2, s);
+  // grade_school_mul(t4, r1, r3, s);
 
   __m256i_grade_school_mul_32(t2, buf, r, r2, s);
   __m256i_grade_school_mul_32(t4, buf, r1, r3, s);
@@ -263,7 +263,7 @@ int toom3__mm256i_SB(int32_t *r, /* out - a * b in Z[x], must be length 2n */
     r4[i] = a[i] + 2 * a1[i] + 4 * a2[i];
     r5[i] = b[i] + 2 * b1[i] + 4 * b2[i];
   }
-  //    grade_school_mul(t6, r4, r5, s);
+  // grade_school_mul(t6, r4, r5, s);
   __m256i_grade_school_mul_32(t6, buf, r4, r5, s);
   ;
 
@@ -312,9 +312,9 @@ int toom3__mm256i_SB(int32_t *r, /* out - a * b in Z[x], must be length 2n */
    * putting them back
    */
 
-  memcpy(r2, r, sizeof(uint16_t) * s2);
-  memcpy(r, t, sizeof(uint16_t) * s2);
-  memcpy(r4, t8, sizeof(uint16_t) * s2);
+  memcpy(r2, r, sizeof(int32_t) * s2);
+  memcpy(r, t, sizeof(int32_t) * s2);
+  memcpy(r4, t8, sizeof(int32_t) * s2);
 
   for (i = 0; i < s2; i++) {
     r1[i] += t4[i];

@@ -9,7 +9,7 @@ int main() {
   int32_t *buf = new int32_t[4 * N];
   int32_t *r = new int32_t[4 * N];
   int32_t *r2 = new int32_t[4 * N];
-  int32_t *r3 = new int32_t[4 * N];
+  // int32_t *r3 = new int32_t[4 * N];
 
   uint16_t i, j;
   uint64_t ss0, ss1, ss2, ss3;

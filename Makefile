@@ -1,9 +1,11 @@
 .PHONY: all clean
 # CXXFLAGS := -O3 -march=native -ffast-math -fmax-errors=1 -Wall -Wextra -pedantic
-CXXFLAGS := -O0 -march=native -ffast-math -fmax-errors=1
+CXXFLAGS := -O0 -march=native -fmax-errors=1 -Wall -Wextra -pedantic
+
+all: 32sb_mul_test 32kara_test 32toom3_test 32toom4_test benchmark
 
 clean:
-	rm -v *.o 32sb_mul_test 32kara_test 32toom3_test 32benchmark
+	rm -v *.o 32sb_mul_test 32kara_test 32toom3_test benchmark
 
 utils.o: utils.cpp utils.h
 

@@ -33,7 +33,7 @@ toom4_SB(
     int32_t const *b1 = b+s, *b2 = b+2*s, *b3 = b+3*s;
     int32_t *r1 = r+s, *r2 = r+2*s, *r4 = r+4*s, *r6 = r+6*s, *r7 = r+7*s;
     int32_t *t3 = t+2*s, *t5 = t+4*s;
-    int32_t *e = t+6*s; // for karatsuba only
+    // int32_t *e = t+6*s; // for karatsuba only
     // +-1 ---- t: -, r2: +
     for(i=0; i<s; i++)
     {
@@ -220,7 +220,7 @@ toom4__mm256i_toom3(
     }
     uint16_t s = 96, s2 = 192;
     uint16_t i;
-    uint16_t x; // swap space
+    int32_t x; // swap space
     int32_t const *a1 = a+s, *a2 = a+2*s, *a3 = a+3*s;
     int32_t const *b1 = b+s, *b2 = b+2*s, *b3 = b+3*s;
     int32_t *r1 = r+s, *r2 = r+2*s, *r4 = r+4*s, *r6 = r+6*s, *r7 = r+7*s;

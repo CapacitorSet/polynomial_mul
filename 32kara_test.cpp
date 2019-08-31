@@ -24,8 +24,8 @@ int main() {
     cout << "dimension: " << test_dim << " ";
     // for (j=0;j<100;j++) {
     for (j = 0; j < 10; j++) {
-      memset(a + test_dim, 0, 2 * N * sizeof(uint16_t));
-      memset(b + test_dim, 0, 2 * N * sizeof(uint16_t));
+      memset(a + test_dim, 0, 2 * N * sizeof(int32_t));
+      memset(b + test_dim, 0, 2 * N * sizeof(int32_t));
       for (i = 0; i < test_dim; i++) {
         a[i] = (rand() % (4 * 1024)) - (2 * 1024); // rand32();
         b[i] = rand32();
