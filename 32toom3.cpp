@@ -341,13 +341,16 @@ int __mm256i_toom3__mm256i_SB(
   }
 
   uint16_t i;
-  uint16_t s = 32, s2 = 64;
+  const int s = 32, s2 = 64;
   int32_t const *a1 = a + s, *a2 = a + s2;
   int32_t const *b1 = b + s, *b2 = b + s2;
   int32_t *r1 = r + s, *r2 = r + s2, *r3 = r + s * 3, *r4 = r + s * 4,
           *r5 = r + s * 5;
-  int32_t *t2 = t + s2, *t4 = t + s2 * 2, *t6 = t + s2 * 3, *t8 = t + s2 * 4;
-  int32_t *buf = t + s2 * 10;
+  int32_t t2[s2];
+  int32_t t4[s2];
+  int32_t t6[s2];
+  int32_t t8[s2];
+  int32_t buf[s2];
 
   /*
    * t  = w0   = a(0) * b(0)
@@ -465,7 +468,7 @@ int __mm256i_toom3__mm256i_SB(
    *    = (t6 - w0 - 4*w2 - 16*w4)/2
    *    = (t6 - t0 - 4*r  - 16*t8)/2
    */
-  const __m256i magic_num = _mm256_set1_epi16(43691);
+  const __m256i magic_num = _mm256_set1_epi32(43691);
   for (i = 0; i < s2; i += 8) {
     __m256i _t = _mm256_loadu_si256((__m256i *)(t + i));
     __m256i _t6 = _mm256_loadu_si256((__m256i *)(t6 + i));
@@ -500,9 +503,9 @@ int __mm256i_toom3__mm256i_SB(
 
     __m256i _t2 = _mm256_sub_epi32(_t6, _r2);
     _r2 = _mm256_slli_epi32(_r2, 2);
-    _t2 = _mm256_mullo_epi16(_t2, magic_num);
+    _t2 = _mm256_mullo_epi32(_t2, magic_num);
     __m256i _t4 = _mm256_sub_epi32(_r2, _t6);
-    _t4 = _mm256_mullo_epi16(_t4, magic_num);
+    _t4 = _mm256_mullo_epi32(_t4, magic_num);
 
     _mm256_storeu_si256((__m256i *)(t2 + i), _t2);
     _mm256_storeu_si256((__m256i *)(t4 + i), _t4);

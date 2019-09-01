@@ -14,8 +14,7 @@ int main() {
   int32_t *r5 = new int32_t[4 * N];
   uint16_t i, j;
   uint16_t test_dim;
-  float ss0, ss1, ss2, ss3, ss4;
-  clock_t start, end;
+  uint64_t ss0, ss1, ss2, ss3, ss4;
 
   cout << "testing toom 4" << endl;
   for (test_dim = 289; test_dim < 384; test_dim++) {
@@ -23,14 +22,19 @@ int main() {
     ss1 = 0;
     ss2 = 0;
     ss3 = 0;
+    ss4 = 0;
     cout << "dimension: " << test_dim << " ";
-    for (j = 0; j < 1000; j++) {
+    for (j = 0; j < 100; j++) {
+      // for (j = 0; j < 1000; j++) {
       memset(a + test_dim, 0, 2 * N * sizeof(int32_t));
       memset(b + test_dim, 0, 2 * N * sizeof(int32_t));
       for (i = 0; i < test_dim; i++) {
         a[i] = abs((rand() % (4 * 1024)) - (2 * 1024)); // rand32();
         b[i] = abs(rand() & 1);
       }
+
+      clock_t start, end;
+
       start = clock();
       grade_school_mul(r, a, b, test_dim);
       end = clock();
@@ -47,8 +51,8 @@ int main() {
       ss2 += end - start;
 
       start = clock();
-      r4 = r;
-      // toom4__mm256i_toom3(r4, buf, a, b, test_dim);
+      // r4 = r;
+      toom4__mm256i_toom3(r4, buf, a, b, test_dim);
       end = clock();
       ss3 += end - start;
 
