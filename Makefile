@@ -15,8 +15,8 @@ utils.o: utils.cpp utils.h
 32toom4.o: 32toom4.cpp 32toom4.h utils.h
 
 32sb_mul_test: 32sb_mul_test.cpp 32sb_mul.o utils.o
-32kara_test: 32kara_test.cpp 32kara.o 32sb_mul.o utils.o
+32kara_test: 32kara_test.cpp 32toom4.o 32toom3.o 32kara.o 32sb_mul.o utils.o
 32toom3_test: 32toom3_test.cpp 32toom3.o 32sb_mul.o utils.o
 32toom4_test: 32toom4_test.cpp 32toom4.o 32toom3.o 32sb_mul.o utils.o
 
-benchmark: benchmark.cpp utils.o 32kara.o 32sb_mul.o
+benchmark: benchmark.cpp utils.o 32toom4.o 32toom3.o 32kara.o 32sb_mul.o

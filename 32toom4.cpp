@@ -9,7 +9,6 @@
 #include "32toom3.h"
 
 int toom4_SB(int32_t *r,       /* out - a * b in Z[x], must be length 2n */
-             int32_t *t,       /*  in - n coefficients of scratch space */
              int32_t const *a, /*  in - polynomial */
              int32_t const *b, /*  in - polynomial */
              int n)            /*  in - number of coefficients in a and b */
@@ -22,15 +21,15 @@ int toom4_SB(int32_t *r,       /* out - a * b in Z[x], must be length 2n */
     printf("degree exceeds the maximum (384) allowed\n");
     return -1;
   }
-  uint16_t s = 96, s2 = 192;
+  const int s = 96, s2 = 192;
   uint16_t i;
   uint16_t x; // swap space
   int32_t const *a1 = a + s, *a2 = a + 2 * s, *a3 = a + 3 * s;
   int32_t const *b1 = b + s, *b2 = b + 2 * s, *b3 = b + 3 * s;
   int32_t *r1 = r + s, *r2 = r + 2 * s, *r4 = r + 4 * s, *r6 = r + 6 * s,
           *r7 = r + 7 * s;
-  int32_t *t3 = t + 2 * s, *t5 = t + 4 * s;
-  // int32_t *e = t+6*s; // for karatsuba only
+  int32_t t[2*s], t3[2*s], t5[2*s];
+
   // +-1 ---- t: -, r2: +
   for (i = 0; i < s; i++) {
     r1[i] = a[i] + a2[i];
@@ -95,7 +94,6 @@ int toom4_SB(int32_t *r,       /* out - a * b in Z[x], must be length 2n */
 }
 
 int toom4_toom3(int32_t *r,       /* out - a * b in Z[x], must be length 2n */
-                int32_t *t,       /*  in - n coefficients of scratch space */
                 int32_t const *a, /*  in - polynomial */
                 int32_t const *b, /*  in - polynomial */
                 int n)            /*  in - number of coefficients in a and b */
@@ -108,15 +106,15 @@ int toom4_toom3(int32_t *r,       /* out - a * b in Z[x], must be length 2n */
     printf("degree exceeds the maximum (384) allowed\n");
     return -1;
   }
-  uint16_t s = 96, s2 = 192;
+  const int s = 96, s2 = 192;
   uint16_t i;
   uint16_t x; // swap space
   int32_t const *a1 = a + s, *a2 = a + 2 * s, *a3 = a + 3 * s;
   int32_t const *b1 = b + s, *b2 = b + 2 * s, *b3 = b + 3 * s;
   int32_t *r1 = r + s, *r2 = r + 2 * s, *r4 = r + 4 * s, *r6 = r + 6 * s,
           *r7 = r + 7 * s;
-  int32_t *t3 = t + 2 * s, *t5 = t + 4 * s;
-  int32_t *e = t + 6 * s; // for karatsuba only
+  int32_t t[2*s], t3[2*s], t5[2*s];
+
   // +-1 ---- t: -, r2: +
   for (i = 0; i < s; i++) {
     r1[i] = a[i] + a2[i];
@@ -128,8 +126,8 @@ int toom4_toom3(int32_t *r,       /* out - a * b in Z[x], must be length 2n */
     r6[i] = r7[i] + x;
     r7[i] -= x;
   }
-  toom3(t, e, r, r6, s);
-  toom3(t5, e, r1, r7, s);
+  toom3(t, r, r6, s);
+  toom3(t5, r1, r7, s);
   for (i = 0; i < s2; i++) {
     r2[i] = (t[i] + t5[i]) >> 1;
     t[i] = (t[i] - t5[i]) >> 1;
@@ -145,8 +143,8 @@ int toom4_toom3(int32_t *r,       /* out - a * b in Z[x], must be length 2n */
     r6[i] = r7[i] + x;
     r7[i] -= x;
   }
-  toom3(t3, e, r, r6, s);
-  toom3(t5, e, r1, r7, s);
+  toom3(t3, r, r6, s);
+  toom3(t5, r1, r7, s);
   for (i = 0; i < s2; i++) {
     r4[i] = (t3[i] + t5[i]) >> 1;
     t3[i] = (t3[i] - t5[i]) >> 2;
@@ -156,9 +154,9 @@ int toom4_toom3(int32_t *r,       /* out - a * b in Z[x], must be length 2n */
     r[i] = (((a3[i] * 3 + a2[i]) * 3) + a1[i]) * 3 + a[i];
     r6[i] = (((b3[i] * 3 + b2[i]) * 3) + b1[i]) * 3 + b[i];
   }
-  toom3(t5, e, r, r6, s);  // t5 = H0+3H1+9H2+27H3+81H4+243H5+728H6
-  toom3(r, e, a, b, s);    // r = H0
-  toom3(r6, e, a3, b3, s); // r6 = H6
+  toom3(t5, r, r6, s);  // t5 = H0+3H1+9H2+27H3+81H4+243H5+728H6
+  toom3(r, a, b, s);    // r = H0
+  toom3(r6, a3, b3, s); // r6 = H6
   // solve H1~H5
   for (i = 0; i < s2; i++) {
     r2[i] -= r[i] + r6[i];
@@ -181,28 +179,28 @@ int toom4_toom3(int32_t *r,       /* out - a * b in Z[x], must be length 2n */
 }
 
 int toom4__mm256i_toom3(int32_t *r, /* out - a * b in Z[x], must be length 2n */
-                        int32_t *t, /*  in - n coefficients of scratch space */
                         int32_t const *a, /*  in - polynomial */
                         int32_t const *b, /*  in - polynomial */
                         int n) /*  in - number of coefficients in a and b */
 {
   if (n < 96) {
-    __mm256i_toom3__mm256i_SB(r, t, a, b, n);
+    __mm256i_toom3__mm256i_SB(r, a, b, n);
     return -1;
   }
   if (n > 384) {
     printf("degree exceeds the maximum (384) allowed\n");
     return -1;
   }
-  uint16_t s = 96, s2 = 192;
+  const int s = 96, s2 = 192;
   uint16_t i;
   int32_t x; // swap space
   int32_t const *a1 = a + s, *a2 = a + 2 * s, *a3 = a + 3 * s;
   int32_t const *b1 = b + s, *b2 = b + 2 * s, *b3 = b + 3 * s;
   int32_t *r1 = r + s, *r2 = r + 2 * s, *r4 = r + 4 * s, *r6 = r + 6 * s,
           *r7 = r + 7 * s;
-  int32_t *t3 = t + 2 * s, *t5 = t + 4 * s;
-  int32_t *e = t + 6 * s; // for karatsuba only
+  int32_t t[2*s];
+  int32_t t3[2*s];
+  int32_t t5[2*s];
   // +-1 ---- t: -, r2: +
   for (i = 0; i < s; i++) {
     r1[i] = a[i] + a2[i];
@@ -214,8 +212,8 @@ int toom4__mm256i_toom3(int32_t *r, /* out - a * b in Z[x], must be length 2n */
     r6[i] = r7[i] + x;
     r7[i] -= x;
   }
-  __mm256i_toom3__mm256i_SB(t, e, r, r6, s);
-  __mm256i_toom3__mm256i_SB(t5, e, r1, r7, s);
+  __mm256i_toom3__mm256i_SB(t, r, r6, s);
+  __mm256i_toom3__mm256i_SB(t5, r1, r7, s);
   for (i = 0; i < s2; i++) {
     r2[i] = (t[i] + t5[i]) >> 1;
     t[i] = (t[i] - t5[i]) >> 1;
@@ -231,8 +229,8 @@ int toom4__mm256i_toom3(int32_t *r, /* out - a * b in Z[x], must be length 2n */
     r6[i] = r7[i] + x;
     r7[i] -= x;
   }
-  __mm256i_toom3__mm256i_SB(t3, e, r, r6, s);
-  __mm256i_toom3__mm256i_SB(t5, e, r1, r7, s);
+  __mm256i_toom3__mm256i_SB(t3, r, r6, s);
+  __mm256i_toom3__mm256i_SB(t5, r1, r7, s);
   for (i = 0; i < s2; i++) {
     r4[i] = (t3[i] + t5[i]) >> 1;
     t3[i] = (t3[i] - t5[i]) >> 2;
@@ -242,10 +240,9 @@ int toom4__mm256i_toom3(int32_t *r, /* out - a * b in Z[x], must be length 2n */
     r[i] = (((a3[i] * 3 + a2[i]) * 3) + a1[i]) * 3 + a[i];
     r6[i] = (((b3[i] * 3 + b2[i]) * 3) + b1[i]) * 3 + b[i];
   }
-  __mm256i_toom3__mm256i_SB(t5, e, r, r6,
-                            s); // t5 = H0+3H1+9H2+27H3+81H4+243H5+728H6
-  __mm256i_toom3__mm256i_SB(r, e, a, b, s);    // r = H0
-  __mm256i_toom3__mm256i_SB(r6, e, a3, b3, s); // r6 = H6
+  __mm256i_toom3__mm256i_SB(t5, r, r6, s); // t5 = H0+3H1+9H2+27H3+81H4+243H5+728H6
+  __mm256i_toom3__mm256i_SB(r, a, b, s);    // r = H0
+  __mm256i_toom3__mm256i_SB(r6, a3, b3, s); // r6 = H6
   // solve H1~H5
   for (i = 0; i < s2; i++) {
     r2[i] -= r[i] + r6[i];
@@ -269,13 +266,12 @@ int toom4__mm256i_toom3(int32_t *r, /* out - a * b in Z[x], must be length 2n */
 
 int __mm256i_toom4__mm256i_toom3(
     int32_t *r,       /* out - a * b in Z[x], must be length 2n */
-    int32_t *t,       /*  in - n coefficients of scratch space */
     int32_t const *a, /*  in - polynomial */
     int32_t const *b, /*  in - polynomial */
     int n)            /*  in - number of coefficients in a and b */
 {
   if (n < 96) {
-    __mm256i_toom3__mm256i_SB(r, t, a, b, n);
+    __mm256i_toom3__mm256i_SB(r, a, b, n);
     return -1;
   }
   if (n > 384) {
@@ -288,9 +284,7 @@ int __mm256i_toom4__mm256i_toom3(
   int32_t const *b1 = b + s, *b2 = b + 2 * s, *b3 = b + 3 * s;
   int32_t *r1 = r + s, *r2 = r + 2 * s, *r4 = r + 4 * s, *r6 = r + 6 * s,
           *r7 = r + 7 * s;
-  int32_t t3[2*s];
-  int32_t t5[2*s];
-  int32_t e[4*s]; // for karatsuba only. todo: resize?
+  int32_t t[2*s], t3[2*s], t5[2*s];
   // +-1 ---- t: -, r2: +
   for (int i = 0; i < s; i += 8) {
     __m256i _a = _mm256_loadu_si256((__m256i *)(a + i));
@@ -319,8 +313,8 @@ int __mm256i_toom4__mm256i_toom3(
     _mm256_storeu_si256((__m256i *)(r7 + i), _r7);
   }
 
-  __mm256i_toom3__mm256i_SB(t, e, r, r6, s);
-  __mm256i_toom3__mm256i_SB(t5, e, r1, r7, s);
+  __mm256i_toom3__mm256i_SB(t, r, r6, s);
+  __mm256i_toom3__mm256i_SB(t5, r1, r7, s);
   for (int i = 0; i < s2; i += 8) {
     __m256i _t = _mm256_loadu_si256((__m256i *)(t + i));
     __m256i _t5 = _mm256_loadu_si256((__m256i *)(t5 + i));
@@ -369,8 +363,8 @@ int __mm256i_toom4__mm256i_toom3(
     _mm256_storeu_si256((__m256i *)(r7 + i), _r7);
   }
 
-  __mm256i_toom3__mm256i_SB(t3, e, r, r6, s);
-  __mm256i_toom3__mm256i_SB(t5, e, r1, r7, s);
+  __mm256i_toom3__mm256i_SB(t3, r, r6, s);
+  __mm256i_toom3__mm256i_SB(t5, r1, r7, s);
 
   for (int i = 0; i < s2; i += 8) {
     __m256i _t3 = _mm256_loadu_si256((__m256i *)(t3 + i));
@@ -415,10 +409,9 @@ int __mm256i_toom4__mm256i_toom3(
     _mm256_storeu_si256((__m256i *)(r6 + i), _r6);
   }
 
-  __mm256i_toom3__mm256i_SB(t5, e, r, r6,
-                            s); // t5 = H0+3H1+9H2+27H3+81H4+243H5+728H6
-  __mm256i_toom3__mm256i_SB(r, e, a, b, s);    // r = H0
-  __mm256i_toom3__mm256i_SB(r6, e, a3, b3, s); // r6 = H6
+  __mm256i_toom3__mm256i_SB(t5, r, r6, s); // t5 = H0+3H1+9H2+27H3+81H4+243H5+728H6
+  __mm256i_toom3__mm256i_SB(r, a, b, s);    // r = H0
+  __mm256i_toom3__mm256i_SB(r6, a3, b3, s); // r6 = H6
 
   // solve H1~H5
   const __m256i magic_num = _mm256_set1_epi32(43691);

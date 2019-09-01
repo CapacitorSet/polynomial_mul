@@ -6,7 +6,6 @@ int main() {
   const int N = 768;
   int32_t *a = new int32_t[2 * N];
   int32_t *b = new int32_t[2 * N];
-  int32_t *buf = new int32_t[4 * N];
   int32_t *r = new int32_t[4 * N];
   int32_t *r2 = new int32_t[4 * N];
   // int32_t *r3 = new int32_t[4 * N];
@@ -21,7 +20,6 @@ int main() {
   for (j = 0; j < 1000; j++) {
     memset(a, 0, 2 * N * sizeof(int32_t));
     memset(b, 0, 2 * N * sizeof(int32_t));
-    memset(buf, 0, 4 * N * sizeof(int32_t));
     memset(r, 0, 4 * N * sizeof(int32_t));
     for (i = 0; i < N; i++) {
       a[i] = (rand() % (4 * 1024)) - (2 * 1024); // rand32();
@@ -30,8 +28,7 @@ int main() {
 
     start = clock();
     startc = rdtsc();
-    // __mm256i_karatsuba__mm256_toom4(r, buf, a, b, N);
-    karatsuba_SB(r, buf, a, b, N);
+    __mm256i_karatsuba__mm256_toom4(r, a, b, N);
     endc = rdtsc();
     end = clock();
     ss3 += end - start;

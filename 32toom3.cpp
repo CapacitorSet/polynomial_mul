@@ -2,7 +2,6 @@
 #include "32sb_mul.h"
 
 int toom3(int32_t *r,       /* out - a * b in Z[x], must be length 2n */
-          int32_t *t,       /*  in - n coefficients of scratch space */
           int32_t const *a, /*  in - polynomial */
           int32_t const *b, /*  in - polynomial */
           int n)            /*  in - number of coefficients in a and b */
@@ -17,15 +16,12 @@ int toom3(int32_t *r,       /* out - a * b in Z[x], must be length 2n */
   }
 
   uint16_t i;
-  // uint16_t s = 1;
-  // uint16_t s2 = 2;
-  uint16_t s = 32;
-  uint16_t s2 = 64;
+  const int s = 32, s2 = 64;
   int32_t const *a1 = a + s, *a2 = a + s2;
   int32_t const *b1 = b + s, *b2 = b + s2;
   int32_t *r1 = r + s, *r2 = r + s2, *r3 = r + s * 3, *r4 = r + s * 4,
           *r5 = r + s * 5;
-  int32_t *t2 = t + s2, *t4 = t + s2 * 2, *t6 = t + s2 * 3, *t8 = t + s2 * 4;
+  int32_t t[s2], t2[s2], t4[s2], t6[s2], t8[s2];
 
   /*
    * t  = w0   = a(0) * b(0)
@@ -161,7 +157,6 @@ int toom3(int32_t *r,       /* out - a * b in Z[x], must be length 2n */
 }
 
 int toom3__mm256i_SB(int32_t *r, /* out - a * b in Z[x], must be length 2n */
-                     int32_t *t, /*  in - n coefficients of scratch space */
                      int32_t const *a, /*  in - polynomial */
                      int32_t const *b, /*  in - polynomial */
                      int n) /*  in - number of coefficients in a and b */
@@ -176,13 +171,12 @@ int toom3__mm256i_SB(int32_t *r, /* out - a * b in Z[x], must be length 2n */
   }
 
   uint16_t i;
-  uint16_t s = 32, s2 = 64;
+  const int s = 32, s2 = 64;
   int32_t const *a1 = a + s, *a2 = a + s2;
   int32_t const *b1 = b + s, *b2 = b + s2;
   int32_t *r1 = r + s, *r2 = r + s2, *r3 = r + s * 3, *r4 = r + s * 4,
           *r5 = r + s * 5;
-  int32_t *t2 = t + s2, *t4 = t + s2 * 2, *t6 = t + s2 * 3, *t8 = t + s2 * 4;
-  int32_t *buf = t + s2 * 10;
+  int32_t t[s2], t2[s2], t4[s2], t6[s2], t8[s2];
 
   /*
    * t  = w0   = a(0) * b(0)
@@ -193,8 +187,8 @@ int toom3__mm256i_SB(int32_t *r, /* out - a * b in Z[x], must be length 2n */
   // grade_school_mul(t, a, b, s);
   // grade_school_mul(t8, a2, b2, s);
 
-  __m256i_grade_school_mul_32(t, buf, a, b, s);
-  __m256i_grade_school_mul_32(t8, buf, a2, b2, s);
+  __m256i_grade_school_mul_32(t, a, b, s);
+  __m256i_grade_school_mul_32(t8, a2, b2, s);
 #ifdef DEBUG
   printf("t:");
   print32poly(t);
@@ -222,8 +216,8 @@ int toom3__mm256i_SB(int32_t *r, /* out - a * b in Z[x], must be length 2n */
   // grade_school_mul(t2, r, r2, s);
   // grade_school_mul(t4, r1, r3, s);
 
-  __m256i_grade_school_mul_32(t2, buf, r, r2, s);
-  __m256i_grade_school_mul_32(t4, buf, r1, r3, s);
+  __m256i_grade_school_mul_32(t2, r, r2, s);
+  __m256i_grade_school_mul_32(t4, r1, r3, s);
 
 #ifdef DEBUG
   printf("t2:");
@@ -264,7 +258,7 @@ int toom3__mm256i_SB(int32_t *r, /* out - a * b in Z[x], must be length 2n */
     r5[i] = b[i] + 2 * b1[i] + 4 * b2[i];
   }
   // grade_school_mul(t6, r4, r5, s);
-  __m256i_grade_school_mul_32(t6, buf, r4, r5, s);
+  __m256i_grade_school_mul_32(t6, r4, r5, s);
   ;
 
   /*
@@ -326,7 +320,6 @@ int toom3__mm256i_SB(int32_t *r, /* out - a * b in Z[x], must be length 2n */
 
 int __mm256i_toom3__mm256i_SB(
     int32_t *r,       /* out - a * b in Z[x], must be length 2n */
-    int32_t *t,       /*  in - n coefficients of scratch space */
     int32_t const *a, /*  in - polynomial */
     int32_t const *b, /*  in - polynomial */
     int n)            /*  in - number of coefficients in a and b */
@@ -346,11 +339,11 @@ int __mm256i_toom3__mm256i_SB(
   int32_t const *b1 = b + s, *b2 = b + s2;
   int32_t *r1 = r + s, *r2 = r + s2, *r3 = r + s * 3, *r4 = r + s * 4,
           *r5 = r + s * 5;
+  int32_t t[s2];
   int32_t t2[s2];
   int32_t t4[s2];
   int32_t t6[s2];
   int32_t t8[s2];
-  int32_t buf[s2];
 
   /*
    * t  = w0   = a(0) * b(0)
@@ -361,8 +354,8 @@ int __mm256i_toom3__mm256i_SB(
   // grade_school_mul(t, a, b, s);
   // grade_school_mul(t8, a2, b2, s);
 
-  __m256i_grade_school_mul_32(t, buf, a, b, s);
-  __m256i_grade_school_mul_32(t8, buf, a2, b2, s);
+  __m256i_grade_school_mul_32(t, a, b, s);
+  __m256i_grade_school_mul_32(t8, a2, b2, s);
 #ifdef DEBUG
   printf("t:");
   print32poly(t);
@@ -415,8 +408,8 @@ int __mm256i_toom3__mm256i_SB(
   // grade_school_mul(t2, r, r2, s);
   // grade_school_mul(t4, r1, r3, s);
 
-  __m256i_grade_school_mul_32(t2, buf, r, r2, s);
-  __m256i_grade_school_mul_32(t4, buf, r1, r3, s);
+  __m256i_grade_school_mul_32(t2, r, r2, s);
+  __m256i_grade_school_mul_32(t4, r1, r3, s);
 
 #ifdef DEBUG
   printf("t2:");
@@ -460,8 +453,7 @@ int __mm256i_toom3__mm256i_SB(
 #endif
 
   // grade_school_mul(t6, r4, r5, s);
-  __m256i_grade_school_mul_32(t6, buf, r4, r5, s);
-  ;
+  __m256i_grade_school_mul_32(t6, r4, r5, s);
 
   /*
    * t6 = w1 + 4*w3

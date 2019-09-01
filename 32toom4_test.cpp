@@ -6,7 +6,6 @@ int main() {
   const int N = 384;
   int32_t *a = new int32_t[2 * N];
   int32_t *b = new int32_t[2 * N];
-  int32_t *buf = new int32_t[4 * N];
   int32_t *r = new int32_t[4 * N];
   int32_t *r2 = new int32_t[4 * N];
   int32_t *r3 = new int32_t[4 * N];
@@ -41,24 +40,24 @@ int main() {
       ss0 += end - start;
 
       start = clock();
-      toom4_SB(r2, buf, a, b, test_dim);
+      toom4_SB(r2, a, b, test_dim);
       end = clock();
       ss1 += end - start;
 
       start = clock();
-      toom4_toom3(r3, buf, a, b, test_dim);
+      toom4_toom3(r3, a, b, test_dim);
       end = clock();
       ss2 += end - start;
 
       start = clock();
       // r4 = r;
-      toom4__mm256i_toom3(r4, buf, a, b, test_dim);
+      toom4__mm256i_toom3(r4, a, b, test_dim);
       end = clock();
       ss3 += end - start;
 
       start = clock();
       // r5 = r;
-      __mm256i_toom4__mm256i_toom3(r5, buf, a, b, test_dim);
+      __mm256i_toom4__mm256i_toom3(r5, a, b, test_dim);
       end = clock();
       ss4 += end - start;
 

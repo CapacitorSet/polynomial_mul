@@ -6,7 +6,7 @@ int main() {
   const int N = 768;
   int32_t *a = new int32_t[2 * N];
   int32_t *b = new int32_t[2 * N];
-  int32_t *buf = new int32_t[4 * N];
+  // int32_t *buf = new int32_t[4 * N];
   int32_t *r = new int32_t[4 * N];
   int32_t *r2 = new int32_t[4 * N];
   int32_t *r3 = new int32_t[4 * N];
@@ -48,12 +48,12 @@ int main() {
       ss1 += end - start;
 
       start = clock();
-      karatsuba_SB(r2, buf, a, b, test_dim);
+      karatsuba_SB(r2, a, b, test_dim);
       end = clock();
       ss2 += end - start;
 
       start = clock();
-      // __mm256i_karatsuba__mm256_toom4(r3, buf, a, b, test_dim);
+      __mm256i_karatsuba__mm256_toom4(r3, a, b, test_dim);
       end = clock();
       ss3 += end - start;
 
@@ -62,6 +62,15 @@ int main() {
           printf("error\n");
           for (j = 0; j < test_dim * 2 - 1; j++) {
             printf("%d %d %d %d\n", j, r[j], r2[j], (r[j] - r2[j]) % 2048);
+            if (j == i)
+              printf("!\n");
+          }
+          return 1;
+        }
+        if ((r[i] - r3[i]) % 2048 != 0) {
+          printf("error\n");
+          for (j = 0; j < test_dim * 2 - 1; j++) {
+            printf("%d %d %d %d\n", j, r[j], r3[j], (r[j] - r3[j]) % 2048);
             if (j == i)
               printf("!\n");
           }

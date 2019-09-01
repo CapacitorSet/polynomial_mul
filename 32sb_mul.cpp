@@ -22,13 +22,13 @@ void grade_school_mul(
 
 void __m256i_grade_school_mul_32(
     int32_t *res1,    /* out - a * b in Z[x], must be length 2N */
-    int32_t *buf,     /* buf size >= 64 bytes */
     int32_t const *a, /*  in - polynomial */
     int32_t const *b, /*  in - polynomial */
     int N)            /*  in - number of coefficients in a and b <= 32*/
 {
   int sizen = N * sizeof(int32_t);
-  memset(buf, 0, sizen * 2);
+  int32_t buf[64] = {};
+  // memset(buf, 0, sizen * 2);
   memcpy(buf, a, sizen);
 
   int32_t *buf1 = buf + 16;
