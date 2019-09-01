@@ -332,10 +332,10 @@ int __mm256i_toom3__mm256i_SB(
     int n)            /*  in - number of coefficients in a and b */
 {
   if (n > 96) {
-    printf("degree %d exceeds the maximum (96) allowed\n", n);
+    printf("degree exceeds the maximum (96) allowed\n");
     return -1;
   }
-  if (n < 32) {
+  if (n <= 32) {
     grade_school_mul(r, a, b, n);
     return 0;
   }
@@ -348,11 +348,6 @@ int __mm256i_toom3__mm256i_SB(
           *r5 = r + s * 5;
   int32_t *t2 = t + s2, *t4 = t + s2 * 2, *t6 = t + s2 * 3, *t8 = t + s2 * 4;
   int32_t *buf = t + s2 * 10;
-  __m256i mr0a, mr0b, mr1a, mr1b, mr2a, mr2b, mr3a, mr3b, mr4a, mr4b, mr5a,
-      mr5b;
-  __m256i mt0a, mt0b, mt0c, mt0d, mt2a, mt2b, mt2c, mt2d, mt4a, mt4b, mt4c,
-      mt4d, mt6a, mt6b, mt6c, mt6d, mt8a, mt8b, mt8c, mt8d;
-  __m256i tmp;
 
   /*
    * t  = w0   = a(0) * b(0)
@@ -360,11 +355,19 @@ int __mm256i_toom3__mm256i_SB(
    *           = a2     * b2
    */
 
-  grade_school_mul(t, a, b, s);
-  grade_school_mul(t8, a2, b2, s);
-  //    __m256i_grade_school_mul_32(t, buf, a, b, s);
-  //    __m256i_grade_school_mul_32(t8, buf, a2, b2, s);
+  // grade_school_mul(t, a, b, s);
+  // grade_school_mul(t8, a2, b2, s);
 
+  __m256i_grade_school_mul_32(t, buf, a, b, s);
+  __m256i_grade_school_mul_32(t8, buf, a2, b2, s);
+#ifdef DEBUG
+  printf("t:");
+  print32poly(t);
+  print32poly(t + 32);
+  printf("t8:");
+  print32poly(t8);
+  print32poly(t8 + 32);
+#endif
   /*
    * t2 = a(1) *b(1)
    *    = (a0+a1+a2)*(b0+b1+b2)
@@ -372,240 +375,146 @@ int __mm256i_toom3__mm256i_SB(
    * t4 = a(-1) * b(-1)
    *    = (a0-a1+a2)*(b0-b1+b2)
    *    = r1        * r3
-   */
-
-  /*
-   * r  = (a0+a1+a2)
-   * r1 = (a0-a1+a2)
-   */
-
-  mr0a = _mm256_loadu_si256((__m256i *)a);
-  tmp = _mm256_loadu_si256((__m256i *)a2);
-  mr0a = _mm256_add_epi16(mr0a, tmp);
-  mr0b = _mm256_loadu_si256((__m256i *)a + 1);
-  tmp = _mm256_loadu_si256((__m256i *)a2 + 1);
-  mr0b = _mm256_add_epi16(mr0b, tmp);
-
-  tmp = _mm256_loadu_si256((__m256i *)a1);
-  mr1a = _mm256_sub_epi16(mr0a, tmp);
-  mr0a = _mm256_add_epi16(mr0a, tmp);
-  tmp = _mm256_loadu_si256((__m256i *)a1 + 1);
-  mr1b = _mm256_sub_epi16(mr0b, tmp);
-  mr0b = _mm256_add_epi16(mr0b, tmp);
-
-  _mm256_storeu_si256((__m256i *)r, mr0a);
-  _mm256_storeu_si256((__m256i *)r + 1, mr0b);
-  _mm256_storeu_si256((__m256i *)r1, mr1a);
-  _mm256_storeu_si256((__m256i *)r1 + 1, mr1b);
-
-  /*
-   * r2 = (b0+b1+b2)
-   * r3 = (b0-b1+b2)
-   */
-
-  mr2a = _mm256_loadu_si256((__m256i *)b);
-  tmp = _mm256_loadu_si256((__m256i *)b2);
-  mr2a = _mm256_add_epi16(mr2a, tmp);
-  mr2b = _mm256_loadu_si256((__m256i *)b + 1);
-  tmp = _mm256_loadu_si256((__m256i *)b2 + 1);
-  mr2b = _mm256_add_epi16(mr2b, tmp);
-
-  tmp = _mm256_loadu_si256((__m256i *)b1);
-  mr3a = _mm256_sub_epi16(mr2a, tmp);
-  mr2a = _mm256_add_epi16(mr2a, tmp);
-  tmp = _mm256_loadu_si256((__m256i *)b1 + 1);
-  mr3b = _mm256_sub_epi16(mr2b, tmp);
-  mr2b = _mm256_add_epi16(mr2b, tmp);
-
-  _mm256_storeu_si256((__m256i *)r2, mr2a);
-  _mm256_storeu_si256((__m256i *)r2 + 1, mr2b);
-  _mm256_storeu_si256((__m256i *)r3, mr3a);
-  _mm256_storeu_si256((__m256i *)r3 + 1, mr3b);
-
-  //    __m256i_grade_school_mul_32(t2, buf,r, r2, s);
-  //    __m256i_grade_school_mul_32(t4, buf,r1, r3, s);
-
-  grade_school_mul(t2, r, r2, s);
-  grade_school_mul(t4, r1, r3, s);
-
-  /*
-   * r  = (t2+t4)/2 - w0 - w4
-   *    = w2
-   * r2 = (t2-t4)/2
-   *    = w1 + w3
-   */
-
-  mt0a = _mm256_loadu_si256((__m256i *)t);
-  mt0b = _mm256_loadu_si256((__m256i *)t + 1);
-  mt0c = _mm256_loadu_si256((__m256i *)t + 2);
-  mt0d = _mm256_loadu_si256((__m256i *)t + 3);
-
-  mt2a = _mm256_loadu_si256((__m256i *)t2);
-  mt2b = _mm256_loadu_si256((__m256i *)t2 + 1);
-  mt2c = _mm256_loadu_si256((__m256i *)t2 + 2);
-  mt2d = _mm256_loadu_si256((__m256i *)t2 + 3);
-
-  mt4a = _mm256_loadu_si256((__m256i *)t4);
-  mt4b = _mm256_loadu_si256((__m256i *)t4 + 1);
-  mt4c = _mm256_loadu_si256((__m256i *)t4 + 2);
-  mt4d = _mm256_loadu_si256((__m256i *)t4 + 3);
-
-  mt8a = _mm256_loadu_si256((__m256i *)t8);
-  mt8b = _mm256_loadu_si256((__m256i *)t8 + 1);
-  mt8c = _mm256_loadu_si256((__m256i *)t8 + 2);
-  mt8d = _mm256_loadu_si256((__m256i *)t8 + 3);
-
-  /*
-   * r  = (t2+t4)/2 - w0 - w4
-   *    = w2
-   */
-
-  mr0a = _mm256_add_epi16(mt2a, mt4a);
-  mr0a = _mm256_srai_epi16(mr0a, 1);
-  mr0a = _mm256_sub_epi16(mr0a, mt0a);
-  mr0a = _mm256_sub_epi16(mr0a, mt8a);
-
-  mr0b = _mm256_add_epi16(mt2b, mt4b);
-  mr0b = _mm256_srai_epi16(mr0b, 1);
-  mr0b = _mm256_sub_epi16(mr0b, mt0b);
-  mr0b = _mm256_sub_epi16(mr0b, mt8b);
-
-  mr1a = _mm256_add_epi16(mt2c, mt4c);
-  mr1a = _mm256_srai_epi16(mr1a, 1);
-  mr1a = _mm256_sub_epi16(mr1a, mt0c);
-  mr1a = _mm256_sub_epi16(mr1a, mt8c);
-
-  mr1b = _mm256_add_epi16(mt2d, mt4d);
-  mr1b = _mm256_srai_epi16(mr1b, 1);
-  mr1b = _mm256_sub_epi16(mr1b, mt0d);
-  mr1b = _mm256_sub_epi16(mr1b, mt8d);
-
-  /*
-   * r2 = (t2-t4)/2
-   *    = w1 + w3
-   */
-
-  mr2a = _mm256_sub_epi16(mt2a, mt4a);
-  mr2a = _mm256_srai_epi16(mr2a, 1);
-  mr2b = _mm256_sub_epi16(mt2b, mt4b);
-  mr2b = _mm256_srai_epi16(mr2b, 1);
-  mr3a = _mm256_sub_epi16(mt2c, mt4c);
-  mr3a = _mm256_srai_epi16(mr3a, 1);
-  mr3b = _mm256_sub_epi16(mt2d, mt4d);
-  mr3b = _mm256_srai_epi16(mr3b, 1);
-
-  /*
    * t6 = a(2) *b(2)
    *    = (a0+2a1+4a2)*(b0+2b1+4b2)
    *    = r4          * r5
    */
+  for (int i = 0; i < s; i += 8) {
+    __m256i _a = _mm256_loadu_si256((__m256i *)(a + i));
+    __m256i _a1 = _mm256_loadu_si256((__m256i *)(a1 + i));
+    __m256i _a2 = _mm256_loadu_si256((__m256i *)(a2 + i));
+    __m256i _r = _mm256_add_epi32(_a, _a2);
+    __m256i _r1 = _mm256_sub_epi32(_r, _a1);
+    _r = _mm256_add_epi32(_r, _a1);
+    _a1 = _mm256_slli_epi32(_a1, 1);
+    _a2 = _mm256_slli_epi32(_a2, 2);
+    __m256i _r4 = _mm256_add_epi32(_a, _a1);
+    _r4 = _mm256_add_epi32(_r4, _a2);
 
-  mr4a = _mm256_loadu_si256((__m256i *)a);
-  tmp = _mm256_loadu_si256((__m256i *)a1);
-  tmp = _mm256_slli_epi16(tmp, 1);
-  mr4a = _mm256_add_epi16(mr4a, tmp);
-  tmp = _mm256_loadu_si256((__m256i *)a2);
-  tmp = _mm256_slli_epi16(tmp, 2);
-  mr4a = _mm256_add_epi16(mr4a, tmp);
+    __m256i _b = _mm256_loadu_si256((__m256i *)(b + i));
+    __m256i _b1 = _mm256_loadu_si256((__m256i *)(b1 + i));
+    __m256i _b2 = _mm256_loadu_si256((__m256i *)(b2 + i));
+    __m256i _r2 = _mm256_add_epi32(_b, _b2);
+    __m256i _r3 = _mm256_sub_epi32(_r2, _b1);
+    _r2 = _mm256_add_epi32(_r2, _b1);
+    _b1 = _mm256_slli_epi32(_b1, 1);
+    _b2 = _mm256_slli_epi32(_b2, 2);
+    __m256i _r5 = _mm256_add_epi32(_b, _b1);
+    _r5 = _mm256_add_epi32(_r5, _b2);
 
-  mr4b = _mm256_loadu_si256((__m256i *)a + 1);
-  tmp = _mm256_loadu_si256((__m256i *)a1 + 1);
-  tmp = _mm256_slli_epi16(tmp, 1);
-  mr4b = _mm256_add_epi16(mr4b, tmp);
-  tmp = _mm256_loadu_si256((__m256i *)a2 + 1);
-  tmp = _mm256_slli_epi16(tmp, 2);
-  mr4b = _mm256_add_epi16(mr4b, tmp);
+    _mm256_storeu_si256((__m256i *)(r + i), _r);
+    _mm256_storeu_si256((__m256i *)(r1 + i), _r1);
+    _mm256_storeu_si256((__m256i *)(r2 + i), _r2);
+    _mm256_storeu_si256((__m256i *)(r3 + i), _r3);
+    _mm256_storeu_si256((__m256i *)(r4 + i), _r4);
+    _mm256_storeu_si256((__m256i *)(r5 + i), _r5);
+  }
+  // grade_school_mul(t2, r, r2, s);
+  // grade_school_mul(t4, r1, r3, s);
 
-  mr5a = _mm256_loadu_si256((__m256i *)b);
-  tmp = _mm256_loadu_si256((__m256i *)b1);
-  tmp = _mm256_slli_epi16(tmp, 1);
-  mr5a = _mm256_add_epi16(mr5a, tmp);
-  tmp = _mm256_loadu_si256((__m256i *)b2);
-  tmp = _mm256_slli_epi16(tmp, 2);
-  mr5a = _mm256_add_epi16(mr5a, tmp);
+  __m256i_grade_school_mul_32(t2, buf, r, r2, s);
+  __m256i_grade_school_mul_32(t4, buf, r1, r3, s);
 
-  mr5b = _mm256_loadu_si256((__m256i *)b + 1);
-  tmp = _mm256_loadu_si256((__m256i *)b1 + 1);
-  tmp = _mm256_slli_epi16(tmp, 1);
-  mr5b = _mm256_add_epi16(mr5b, tmp);
-  tmp = _mm256_loadu_si256((__m256i *)b2 + 1);
-  tmp = _mm256_slli_epi16(tmp, 2);
-  mr5b = _mm256_add_epi16(mr5b, tmp);
+#ifdef DEBUG
+  printf("t2:");
+  print32poly(t2);
+  print32poly(t2 + 32);
+  printf("t4:");
+  print32poly(t4);
+  print32poly(t4 + 32);
+#endif
 
-  _mm256_storeu_si256((__m256i *)r4, mr4a);
-  _mm256_storeu_si256((__m256i *)r4 + 1, mr4b);
-  _mm256_storeu_si256((__m256i *)r5, mr5a);
-  _mm256_storeu_si256((__m256i *)r5 + 1, mr5b);
+  /*
+   * r  = (t2+t4)/2 - w0 - w4
+   *    = w2
+   * r2 = (t2-t4)/2
+   *    = w1 + w3
+   */
+  for (int i = 0; i < s2; i += 8) {
+    __m256i _t2 = _mm256_loadu_si256((__m256i *)(t2 + i));
+    __m256i _t4 = _mm256_loadu_si256((__m256i *)(t4 + i));
+    __m256i _t8 = _mm256_loadu_si256((__m256i *)(t8 + i));
+    __m256i _t = _mm256_loadu_si256((__m256i *)(t + i));
 
-  grade_school_mul(t6, r4, r5, s);
-  //    __m256i_grade_school_mul_32(t6, buf, r4, r5, s);;
+    __m256i _r = _mm256_add_epi32(_t2, _t4);
+    _r = _mm256_srai_epi32(_r, 1);
+    _r = _mm256_sub_epi32(_r, _t);
+    _r = _mm256_sub_epi32(_r, _t8);
+    __m256i _r2 = _mm256_sub_epi32(_t2, _t4);
+    _r2 = _mm256_srai_epi32(_r2, 1);
+
+    _mm256_storeu_si256((__m256i *)(r + i), _r);
+    _mm256_storeu_si256((__m256i *)(r2 + i), _r2);
+  }
+
+#ifdef DEBUG
+  printf("r:");
+  print32poly(r);
+  print32poly(r + 32);
+  printf("r2:");
+  print32poly(r2);
+  print32poly(r2 + 32);
+#endif
+
+  // grade_school_mul(t6, r4, r5, s);
+  __m256i_grade_school_mul_32(t6, buf, r4, r5, s);
+  ;
 
   /*
    * t6 = w1 + 4*w3
    *    = (t6 - w0 - 4*w2 - 16*w4)/2
    *    = (t6 - t0 - 4*r  - 16*t8)/2
    */
+  const __m256i magic_num = _mm256_set1_epi16(43691);
+  for (i = 0; i < s2; i += 8) {
+    __m256i _t = _mm256_loadu_si256((__m256i *)(t + i));
+    __m256i _t6 = _mm256_loadu_si256((__m256i *)(t6 + i));
+    __m256i _t8 = _mm256_loadu_si256((__m256i *)(t8 + i));
+    __m256i _r = _mm256_loadu_si256((__m256i *)(r + i));
 
-  mt6a = _mm256_loadu_si256((__m256i *)t6);
-  mt6b = _mm256_loadu_si256((__m256i *)t6 + 1);
-  mt6c = _mm256_loadu_si256((__m256i *)t6 + 2);
-  mt6d = _mm256_loadu_si256((__m256i *)t6 + 3);
+    _r = _mm256_slli_epi32(_r, 1);
+    _t8 = _mm256_slli_epi32(_t8, 3);
+    __m256i tmp = _mm256_sub_epi32(_t6, _t);
+    __m256i tmp2 = _mm256_add_epi32(_r, _t8);
+    tmp = _mm256_srai_epi32(tmp, 1);
+    _t6 = _mm256_sub_epi32(tmp, tmp2);
 
-  /*  t6 = t6 - t0 */
-  mt6a = _mm256_sub_epi16(mt6a, mt0a);
-  mt6b = _mm256_sub_epi16(mt6b, mt0b);
-  mt6c = _mm256_sub_epi16(mt6c, mt0c);
-  mt6d = _mm256_sub_epi16(mt6d, mt0d);
+    /*
+        _mm256_storeu_si256((__m256i *)(t6 + i), _t6);
+      }
 
-  /*  t6 = t6 - 4r0 */
-  mt6a = _mm256_sub_epi16(mt6a, _mm256_slli_epi16(mr0a, 2));
-  mt6b = _mm256_sub_epi16(mt6b, _mm256_slli_epi16(mr0b, 2));
-  mt6c = _mm256_sub_epi16(mt6c, _mm256_slli_epi16(mr1a, 2));
-  mt6d = _mm256_sub_epi16(mt6d, _mm256_slli_epi16(mr1b, 2));
+    #ifdef DEBUG
+      printf("t6:");
+      print32poly(t6);
+      print32poly(t6 + 32);
+    #endif
 
-  /*  t6 = t6 - 16t8 */
-  mt6a = _mm256_sub_epi16(mt6a, _mm256_slli_epi16(mt8a, 4));
-  mt6b = _mm256_sub_epi16(mt6b, _mm256_slli_epi16(mt8b, 4));
-  mt6c = _mm256_sub_epi16(mt6c, _mm256_slli_epi16(mt8c, 4));
-  mt6d = _mm256_sub_epi16(mt6d, _mm256_slli_epi16(mt8d, 4));
+      // t2 = w3 = (t6 - r2)/3
+      //    = (t6 - t4) * 43691
+      // t4 = w1 = (4*r2-t6)/3
+      //    = (4*r4-t6) * 43691
+      for (i = 0; i < s2; i += 8) {
+        __m256i _t6 = _mm256_loadu_si256((__m256i *)(t6 + i));
+        */
+    __m256i _r2 = _mm256_loadu_si256((__m256i *)(r2 + i));
 
-  /*  t6 = t6/2 */
-  mt6a = _mm256_srai_epi16(mt6a, 1);
-  mt6b = _mm256_srai_epi16(mt6b, 1);
-  mt6c = _mm256_srai_epi16(mt6c, 1);
-  mt6d = _mm256_srai_epi16(mt6d, 1);
+    __m256i _t2 = _mm256_sub_epi32(_t6, _r2);
+    _r2 = _mm256_slli_epi32(_r2, 2);
+    _t2 = _mm256_mullo_epi16(_t2, magic_num);
+    __m256i _t4 = _mm256_sub_epi32(_r2, _t6);
+    _t4 = _mm256_mullo_epi16(_t4, magic_num);
 
-  /*
-   * t2 = w3 = (t6 - r2)/3
-   *    = (t6 - t4) * 43691
-   * t4 = w1 = (4*r2-t6)/3
-   *    = (4*r4-t6) * 43691
-   */
-  tmp = _mm256_set1_epi16(43691);
-
-  /* t2 = t6 - r2 */
-  mt2a = _mm256_sub_epi16(mt6a, mr2a);
-  mt2b = _mm256_sub_epi16(mt6b, mr2b);
-  mt2c = _mm256_sub_epi16(mt6c, mr3a);
-  mt2d = _mm256_sub_epi16(mt6d, mr3b);
-
-  /* t2 = t2/3 */
-  mt2a = _mm256_mullo_epi16(mt2a, tmp);
-  mt2b = _mm256_mullo_epi16(mt2b, tmp);
-  mt2c = _mm256_mullo_epi16(mt2c, tmp);
-  mt2d = _mm256_mullo_epi16(mt2d, tmp);
-
-  /* t4 = 4*r2 - t6 */
-  mt4a = _mm256_sub_epi16(_mm256_slli_epi16(mr2a, 2), mt6a);
-  mt4b = _mm256_sub_epi16(_mm256_slli_epi16(mr2b, 2), mt6b);
-  mt4c = _mm256_sub_epi16(_mm256_slli_epi16(mr3a, 2), mt6c);
-  mt4d = _mm256_sub_epi16(_mm256_slli_epi16(mr3b, 2), mt6d);
-
-  /* t4 = t4/3 */
-  mt4a = _mm256_mullo_epi16(mt4a, tmp);
-  mt4b = _mm256_mullo_epi16(mt4b, tmp);
-  mt4c = _mm256_mullo_epi16(mt4c, tmp);
-  mt4d = _mm256_mullo_epi16(mt4d, tmp);
+    _mm256_storeu_si256((__m256i *)(t2 + i), _t2);
+    _mm256_storeu_si256((__m256i *)(t4 + i), _t4);
+  }
+#ifdef DEBUG
+  printf("t2:");
+  print32poly(t2);
+  print32poly(t2 + 32);
+  printf("t4:");
+  print32poly(t4);
+  print32poly(t4 + 32);
+#endif
 
   /*
    * now we have
@@ -617,27 +526,22 @@ int __mm256i_toom3__mm256i_SB(
    * putting them back
    */
 
-  mt0c = _mm256_add_epi16(mt0c, mt4a);
-  mt0d = _mm256_add_epi16(mt0d, mt4b);
-  mr0a = _mm256_add_epi16(mr0a, mt4c);
-  mr0b = _mm256_add_epi16(mr0b, mt4d);
-  mr1a = _mm256_add_epi16(mr1a, mt2a);
-  mr1b = _mm256_add_epi16(mr1b, mt2b);
-  mt8a = _mm256_add_epi16(mt8a, mt2c);
-  mt8b = _mm256_add_epi16(mt8b, mt2d);
+  memcpy(r2, r, sizeof(int32_t) * s2);
+  memcpy(r, t, sizeof(int32_t) * s2);
+  memcpy(r4, t8, sizeof(int32_t) * s2);
 
-  _mm256_storeu_si256((__m256i *)r, mt0a);
-  _mm256_storeu_si256((__m256i *)r + 1, mt0b);
-  _mm256_storeu_si256((__m256i *)r1, mt0c);
-  _mm256_storeu_si256((__m256i *)r1 + 1, mt0d);
-  _mm256_storeu_si256((__m256i *)r2, mr0a);
-  _mm256_storeu_si256((__m256i *)r2 + 1, mr0b);
-  _mm256_storeu_si256((__m256i *)r3, mr1a);
-  _mm256_storeu_si256((__m256i *)r3 + 1, mr1b);
-  _mm256_storeu_si256((__m256i *)r4, mt8a);
-  _mm256_storeu_si256((__m256i *)r4 + 1, mt8b);
-  _mm256_storeu_si256((__m256i *)r5, mt8c);
-  _mm256_storeu_si256((__m256i *)r5 + 1, mt8d);
+  for (i = 0; i < s2; i += 8) {
+    __m256i _r1 = _mm256_loadu_si256((__m256i *)(r1 + i));
+    __m256i _r3 = _mm256_loadu_si256((__m256i *)(r3 + i));
+    __m256i _t4 = _mm256_loadu_si256((__m256i *)(t4 + i));
+    __m256i _t2 = _mm256_loadu_si256((__m256i *)(t2 + i));
+
+    _r1 = _mm256_add_epi32(_r1, _t4);
+    _r3 = _mm256_add_epi32(_r3, _t2);
+
+    _mm256_storeu_si256((__m256i *)(r1 + i), _r1);
+    _mm256_storeu_si256((__m256i *)(r3 + i), _r3);
+  }
 
   return 0;
 }

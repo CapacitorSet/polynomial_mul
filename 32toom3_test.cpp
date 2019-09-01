@@ -46,8 +46,7 @@ int main() {
       ss2 += end - start;
 
       start = clock();
-      r4 = r;
-      // __mm256i_toom3__mm256i_SB(r4, buf, a, b, test_dim);
+      __mm256i_toom3__mm256i_SB(r4, buf, a, b, test_dim);
       end = clock();
       ss3 += end - start;
 
